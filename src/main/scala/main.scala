@@ -16,7 +16,7 @@ case class ZkWatcher() extends Watcher {
       println("/a event")
       event.getType match {
         case EventType.NodeCreated =>
-          if pid.isEmpty then pid = Some(Process("notepad.exe").run())
+          if pid.isEmpty then pid = Some(Process("calc.exe").run())
           println("Node created")
         case EventType.NodeDeleted =>
           if pid.isDefined then {
