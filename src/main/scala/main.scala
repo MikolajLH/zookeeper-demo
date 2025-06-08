@@ -1,5 +1,6 @@
 import org.apache.zookeeper.{AddWatchMode, WatchedEvent, Watcher, ZooKeeper}
 import org.apache.zookeeper.Watcher.Event
+import org.apache.zookeeper.Watcher.Event.EventType
 
 import scala.io.StdIn
 import scala.util.Try
@@ -9,8 +10,24 @@ case class ZkWatcher() extends Watcher {
     println(s"Zookeeper's event: $event")
     if event.getPath == "/a" then {
       println("/a event")
+      event.getType match {
+        case EventType.NodeCreated =>
+          println("Node created")
+        case EventType.NodeDeleted =>
+          println("Node deleted")
+        case _ =>
+          println("Other node event")
+      }
     } else if event.getPath.startsWith("/a") then {
       println("/a child event")
+      event.getType match {
+        case EventType.NodeCreated =>
+          println("Node created")
+        case EventType.NodeDeleted =>
+          println("Node deleted")
+        case _ =>
+          println("Other node event")
+      }
     } else {
       println("Other node event")
     }
