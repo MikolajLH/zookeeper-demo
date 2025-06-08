@@ -5,7 +5,9 @@ import org.apache.zookeeper.Watcher.Event.EventType
 import scala.io.StdIn
 import scala.util.Try
 
+
 case class ZkWatcher() extends Watcher {
+  var childrenCounter = 0
   override def process(event: WatchedEvent): Unit = {
     println(s"Zookeeper's event: $event")
     if event.getPath == "/a" then {
@@ -19,15 +21,19 @@ case class ZkWatcher() extends Watcher {
           println("Other node event")
       }
     } else if event.getPath.startsWith("/a") then {
+
       println("/a child event")
       event.getType match {
         case EventType.NodeCreated =>
           println("Node created")
+          childrenCounter = childrenCounter + 1
         case EventType.NodeDeleted =>
           println("Node deleted")
+          childrenCounter = childrenCounter - 1
         case _ =>
           println("Other node event")
       }
+      println(s"Children counter: $childrenCounter")
     } else {
       println("Other node event")
     }
