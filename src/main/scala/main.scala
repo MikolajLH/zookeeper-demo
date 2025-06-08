@@ -3,19 +3,28 @@ import org.apache.zookeeper.Watcher.Event
 import org.apache.zookeeper.Watcher.Event.EventType
 
 import scala.io.StdIn
+import scala.sys.process._
 import scala.util.Try
 
 
 case class ZkWatcher() extends Watcher {
   private var childrenCounter = 0
+  private var pid: Option[Process] = None
   override def process(event: WatchedEvent): Unit = {
     println(s"Zookeeper's event: $event")
     if event.getPath == "/a" then {
       println("/a event")
       event.getType match {
         case EventType.NodeCreated =>
+          if pid.isEmpty then pid = Some(Process("notepad.exe").run())
           println("Node created")
         case EventType.NodeDeleted =>
+          if pid.isDefined then {
+            println("Destroying process")
+            val pr = pid.get
+            pr.destroy()
+            pid = None
+          }
           println("Node deleted")
         case _ =>
           println("Other node event")
