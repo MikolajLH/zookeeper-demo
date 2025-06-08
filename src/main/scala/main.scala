@@ -7,7 +7,7 @@ import scala.util.Try
 
 
 case class ZkWatcher() extends Watcher {
-  var childrenCounter = 0
+  private var childrenCounter = 0
   override def process(event: WatchedEvent): Unit = {
     println(s"Zookeeper's event: $event")
     if event.getPath == "/a" then {
