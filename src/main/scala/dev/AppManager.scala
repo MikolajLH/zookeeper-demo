@@ -35,48 +35,48 @@ class AppManager(connectString: String, sessionTimeout: Int, nodes: Map[String, 
     println(s"$indent$node")
     val children = zk.getChildren(node, false).asScala.toList
     for child <- children.sorted do
-      displayNodeAndChildren(child, indent + " ")
+      displayNodeAndChildren(s"$node/$child", indent + " ")
 
-  override def process(event: WatchedEvent): Unit =
-    for (k,v) <- nodes
-    do
-      if event.getPath == k
-      then
-        println(s"Node $k event")
-        event.getType match
-          case Event.EventType.NodeCreated =>
-            val p = Process(v).run()
-            println(p)
-            pid = Some(p)
-            println("Node created")
-          case Event.EventType.NodeDeleted =>
-            if pid.isDefined then
-              val name = processNames.getOrElse(v, v)
-              //Seq("taskkill", "/PID", pid.get., "/F").!
-              Seq("taskkill", "/IM", name, "/F").!
-              pid.foreach(_.destroy())
-              pid = None
-
-            println("Node deleted")
-          case other: Event.EventType =>
-            println(s"event $other")
-      else if event.getPath.startsWith(k)
-      then
-        println("Child event")
-        val childrenNumber = zk.getAllChildrenNumber(k)
-        println(s"Children number: $childrenNumber")
-
-        event.getType match
-          case Event.EventType.NodeCreated =>
-            println("Node created")
-            SwingUtilities.invokeLater(() =>
+  override def process(event: WatchedEvent): Unit = {
+    val nodePathOp = Option(event.getPath)
+    for nodePath <- nodePathOp do {
+      println(s"Node $nodePath event")
+      for (k,v) <- nodes do
+        if nodePath == k
+        then
+          event.getType match
+            case Event.EventType.NodeCreated =>
+              val p = Process(v).run()
+              println(p)
+              pid = Some(p)
+              println("Node created")
+            case Event.EventType.NodeDeleted =>
+              if pid.isDefined then
+                val name = processNames.getOrElse(v, v)
+                Seq("taskkill", "/IM", name, "/F").!
+                pid.foreach(_.destroy())
+                pid = None
+              println(s"Node $nodePath deleted")
+            case other: Event.EventType =>
+              println(s"event $other")
+        else if nodePath.startsWith(k)
+        then
+          println("Child event")
+          event.getType match
+            case Event.EventType.NodeCreated =>
+              println("Node created")
+              val childrenNumber = zk.getAllChildrenNumber(k)
+              println(s"Children number: $childrenNumber")
+              SwingUtilities.invokeLater(() =>
               JOptionPane.showMessageDialog(null, s"New child node created at ${event.getPath}\n Current children number for $k: $childrenNumber")
-            );
-          case Event.EventType.NodeDeleted =>
-            println("Node deleted")
-          case other: Event.EventType =>
-            println(s"event $other")
-
-
-      else
-        ()
+              );
+            case Event.EventType.NodeDeleted =>
+              println(s"Node $nodePath deleted")
+            case other: Event.EventType =>
+              println(s"event $other")
+        else {
+          println("Other node event")
+          ()
+        }
+    }
+  }
